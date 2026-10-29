@@ -1,0 +1,305 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2907
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Baue eine vollst\'e4ndig nutzbare Webanwendung zur Zeiterfassung f\'fcr unser Maturaballkomitee mit ungef\'e4hr 25 Mitgliedern.\
+\
+Die Anwendung soll die f\'fcr uns relevanten Funktionen von Clockify abdecken, aber ein eigenes, \'fcbersichtliches Design haben. Liefere eine funktionierende Anwendung mit Datenbank, sicherer Anmeldung, Tests und verst\'e4ndlicher Installationsanleitung. Eine reine Demo oder ein Frontend mit Beispieldaten reicht nicht.\
+\
+TECHNOLOGIEN UND ARBEITSWEISE\
+\
+Verwende ausschlie\'dflich:\
+- Java mit Quarkus f\'fcr das Backend\
+- HTML, CSS und normales JavaScript f\'fcr das Frontend\
+- Oracle SQL f\'fcr die Datenbank\
+- PL/SQL nur, wenn es einen nachvollziehbaren Nutzen hat\
+\
+Verwende kein React, Vue, Angular, TypeScript, Node.js-Backend oder anderes Frontend-Framework. Nutze Maven und etablierte Quarkus-Erweiterungen, wo sie sinnvoll sind. Implementiere kryptografische Verfahren und Passwort-Hashing nicht selbst.\
+\
+Halte die Architektur f\'fcr einen Sch\'fcler verst\'e4ndlich. Verwende klare Klassen, verst\'e4ndliche Namen und eine einfache Projektstruktur. Erkl\'e4re wichtige Entscheidungen kurz in der Dokumentation.\
+\
+Pr\'fcfe zuerst das vorhandene Projekt und geltende Repository-Anweisungen. Falls noch kein Projekt vorhanden ist, lege eines an. W\'e4hle miteinander kompatible, stabile Versionen anhand der aktuellen offiziellen Dokumentation.\
+\
+Arbeite selbstst\'e4ndig bis zu einem funktionierenden Ergebnis. Frage nur nach, wenn eine Entscheidung den weiteren Aufbau tats\'e4chlich blockiert. Fehlende SMTP-Zugangsdaten, die sp\'e4tere Serveradresse oder eine noch unbekannte VM d\'fcrfen die Entwicklung nicht blockieren. Verwende daf\'fcr dokumentierte Konfiguration und einen sicheren Entwicklungsmodus.\
+\
+FACHLICHES MODELL\
+\
+Es gibt:\
+- Benutzer\
+- Teams\
+- Aufgabenbereiche\
+- Zeiteintr\'e4ge\
+- Einladungen\
+- eine nachvollziehbare \'c4nderungshistorie f\'fcr relevante Aktionen\
+\
+Teams und Aufgabenbereiche sind voneinander unabh\'e4ngig:\
+- Teams beschreiben die Gruppe, f\'fcr die gearbeitet wurde.\
+- Aufgabenbereiche beschreiben die T\'e4tigkeit, beispielsweise Deko oder Sponsoring.\
+- Ein Benutzer geh\'f6rt genau einem Stammteam an.\
+- Beim Erfassen einer Arbeitszeit darf er aber jedes aktive Team ausw\'e4hlen.\
+- Der Eintrag speichert das tats\'e4chlich ausgew\'e4hlte Team.\
+- Ein sp\'e4terer Wechsel des Stammteams darf historische Eintr\'e4ge nicht ver\'e4ndern.\
+\
+ROLLEN\
+\
+Owner:\
+- Kann alle administrativen Funktionen verwenden.\
+- Kann Admins ernennen und ihnen die Rolle wieder entziehen.\
+- Der letzte aktive Owner darf nicht entfernt, deaktiviert oder herabgestuft werden.\
+\
+Admin:\
+- Verwaltet Mitglieder, Teams und Aufgabenbereiche.\
+- Kann alle Zeiteintr\'e4ge sehen und bearbeiten.\
+- Kann Zeiteintr\'e4ge genehmigen oder ablehnen.\
+- Kann keine Owner-Rechte vergeben oder ver\'e4ndern.\
+\
+Mitglied:\
+- Kann eigene Zeiten erfassen und bearbeiten.\
+- Kann die gemeinsame Zeit\'fcbersicht und Statistiken aller Mitglieder sehen.\
+- Kann keine fremden Eintr\'e4ge ver\'e4ndern und keine Zeiten genehmigen.\
+\
+Pers\'f6nliche E-Mail-Adressen und administrative Informationen sollen nur f\'fcr berechtigte Personen sichtbar sein. In gemeinsamen \'dcbersichten reicht der Anzeigename.\
+\
+ZEITERFASSUNG\
+\
+Implementiere:\
+1. Einen Start/Stopp-Timer.\
+2. Eine nachtr\'e4gliche manuelle Zeiterfassung mit Datum, Beginn und Ende.\
+3. Eine Liste eigener Eintr\'e4ge mit Bearbeitungsm\'f6glichkeit.\
+\
+Bei jeder Zeiterfassung sind verpflichtend:\
+- Team\
+- Aufgabenbereich\
+- sinnvoller, nicht leerer Beschreibungstext\
+\
+Beim Timer m\'fcssen diese Angaben vor dem Start ausgef\'fcllt sein. Sie d\'fcrfen vor dem endg\'fcltigen Speichern noch bearbeitet werden.\
+\
+Anforderungen:\
+- Pro Person darf h\'f6chstens ein Timer gleichzeitig laufen.\
+- Der Timer muss nach Neuladen der Seite und nach erneutem Login weiter korrekt angezeigt werden.\
+- Speichere den Timer serverseitig; der Browser ist nicht die ma\'dfgebliche Zeitquelle.\
+- Verhindere doppelte Eintr\'e4ge durch Doppelklicks oder wiederholte Requests.\
+- Verhindere sich \'fcberschneidende Arbeitszeiten einer Person, auch bei manueller Eingabe und Bearbeitung.\
+- Endzeit muss nach Startzeit liegen.\
+- Keine zuk\'fcnftigen Arbeitszeiten.\
+- Unterst\'fctze Eintr\'e4ge \'fcber Mitternacht.\
+- Speichere Zeitpunkte eindeutig und zeige sie in Europe/Vienna an. Ber\'fccksichtige Sommer- und Winterzeit.\
+- Berechne Dauer und Summen serverseitig.\
+- Runde Stunden nur bei der Anzeige, nicht durch wiederholtes Runden gespeicherter Werte.\
+- Laufende Timer z\'e4hlen noch nicht als abgeschlossene Arbeitszeit.\
+\
+GENEHMIGUNG\
+\
+Jeder neue, abgeschlossene Zeiteintrag hat zun\'e4chst den Status PENDING.\
+\
+M\'f6gliche Status:\
+- PENDING: wartet auf Pr\'fcfung\
+- APPROVED: genehmigt und g\'fcltig\
+- DENIED: abgelehnt und ung\'fcltig\
+\
+Owner und Admins k\'f6nnen Eintr\'e4ge genehmigen oder ablehnen.\
+Bei einer Ablehnung ist eine Begr\'fcndung verpflichtend.\
+\
+Speichere:\
+- wer entschieden hat\
+- wann entschieden wurde\
+- die Ablehnungsbegr\'fcndung\
+\
+Wird ein bereits gepr\'fcfter Eintrag inhaltlich ver\'e4ndert, muss er wieder PENDING werden. Das gilt auch bei einer \'c4nderung durch Admin oder Owner. Fr\'fchere Entscheidungen bleiben in der Historie nachvollziehbar.\
+\
+Die eigenen Eintr\'e4ge eines Admins oder Owners ben\'f6tigen ebenfalls die Freigabe durch eine andere berechtigte Person. Es darf keine Selbstgenehmigung geben.\
+\
+Biete eine Pr\'fcfungs\'fcbersicht mit Filtern und einer verst\'e4ndlichen Detailansicht. Sammelgenehmigung ist sinnvoll, darf aber nur f\'fcr ausdr\'fccklich ausgew\'e4hlte Eintr\'e4ge erfolgen.\
+\
+ZEIT\'dcBERSICHT UND STATISTIK\
+\
+Baue eine gemeinsame \'dcbersicht mit kombinierbaren Filtern f\'fcr:\
+- Zeitraum\
+- Personen\
+- tats\'e4chlich bearbeitetes Team\
+- Aufgabenbereich\
+- Genehmigungsstatus\
+\
+Standardm\'e4\'dfig sollen die g\'fcltigen Stunden, also APPROVED, angezeigt werden. PENDING und DENIED sollen separat ausw\'e4hlbar und eindeutig gekennzeichnet sein. Vermische diese Status nicht in einer unbeschrifteten Gesamtsumme.\
+\
+Zeige:\
+- Gesamtarbeitszeit\
+- ein verst\'e4ndliches Diagramm\
+- die dazugeh\'f6rigen Eintr\'e4ge\
+- unter dem Diagramm immer eine textliche Aufschl\'fcsselung\
+\
+Beispiele:\
+- Bei einer Person: \'847 h Sponsoring, 3 h Deko \'85\'93\
+- Bei einem Team: \'84Anna: 5 h, Max: 3 h \'85\'93\
+\
+In der Gesamtansicht sollen Aufschl\'fcsselungen nach Personen und Aufgabenbereichen verf\'fcgbar sein.\
+\
+Alle Summen, Diagramme, Aufschl\'fcsselungen und Exporte m\'fcssen dieselben aktiven Filter verwenden. Zeige auch Einheiten, Zeitraum und aktive Filter klar an.\
+\
+Teamfilter beziehen sich standardm\'e4\'dfig auf das Team des Zeiteintrags, nicht auf das Stammteam der Person. Beschrifte dies verst\'e4ndlich.\
+\
+Verwende die Farben der Aufgabenbereiche konsistent. Informationen m\'fcssen auch ohne Farberkennung verst\'e4ndlich bleiben.\
+\
+Implementiere einen CSV-Export der gefilterten Eintr\'e4ge einschlie\'dflich Status. Sch\'fctze den Export vor CSV-Formelinjektion.\
+\
+TEAM- UND AUFGABENVERWALTUNG\
+\
+Owner und Admins k\'f6nnen:\
+- Teams anlegen, umbenennen und archivieren\
+- Aufgabenbereiche anlegen, umbenennen und archivieren\
+- jedem Aufgabenbereich eine Farbe zuweisen\
+- Mitglieder einem Stammteam zuordnen und dieses \'e4ndern\
+- Mitglieder deaktivieren\
+\
+Archivierte Teams und Aufgabenbereiche bleiben in historischen Daten erhalten, k\'f6nnen aber f\'fcr neue Zeiteintr\'e4ge nicht mehr ausgew\'e4hlt werden.\
+\
+Verhindere L\'f6schvorg\'e4nge, die historische Zeiteintr\'e4ge oder deren Zuordnung zerst\'f6ren w\'fcrden. Verwende geeignete Datenbank-Constraints.\
+\
+EINLADUNG UND ACCOUNT\
+\
+Keine \'f6ffentliche Selbstregistrierung.\
+\
+Owner und Admins laden Mitglieder per E-Mail ein und w\'e4hlen dabei deren Stammteam.\
+\
+Ablauf:\
+1. Admin gibt E-Mail-Adresse und Stammteam an.\
+2. Die Anwendung erzeugt einen sicheren, zeitlich begrenzten Einladungslink.\
+3. Die eingeladene Person w\'e4hlt Anzeigenamen und Passwort.\
+4. Die Einladung wird einmalig eingel\'f6st.\
+\
+Anforderungen:\
+- Einladungen k\'f6nnen widerrufen und neu versendet werden.\
+- Neuversand macht den alten Link ung\'fcltig.\
+- Speichere Einladungstokens nur gehasht.\
+- Verhindere doppelte Accounts f\'fcr dieselbe normalisierte E-Mail-Adresse.\
+- SMTP-Zugangsdaten kommen ausschlie\'dflich aus der Serverkonfiguration.\
+- Verwende eine konfigurierte \'f6ffentliche Basis-URL f\'fcr Links.\
+- Zeige Tokens und Links nicht in Produktionslogs an.\
+- Im Entwicklungsmodus d\'fcrfen E-Mails lokal abgefangen oder angezeigt werden.\
+- Ohne SMTP-Konfiguration darf die Produktion nicht stillschweigend so tun, als seien Einladungen versendet worden.\
+\
+Implementiere zus\'e4tzlich:\
+- Login und Logout\
+- Passwort \'e4ndern\
+- Passwort vergessen mit sicherem, einmaligem, zeitlich begrenztem Reset-Link\
+- serverseitige Sperre deaktivierter Benutzer und Widerruf ihrer Sitzungen\
+\
+ERSTE INBETRIEBNAHME\
+\
+Es darf kein \'f6ffentlich bekanntes Standardpasswort geben.\
+\
+Implementiere einen dokumentierten, einmaligen Bootstrap-Vorgang zur Erstellung des ersten Owners. Dieser muss nach erfolgreicher Einrichtung deaktiviert sein und darf bei einem Neustart keine neuen privilegierten Benutzer erzeugen.\
+\
+SICHERHEIT\
+\
+Verwende sichere, etablierte Verfahren und aktuelle offizielle Empfehlungen.\
+\
+Insbesondere:\
+- Passw\'f6rter ausschlie\'dflich als geeignete gesalzene Passwort-Hashes speichern.\
+- Passw\'f6rter, Hashes, Sitzungstokens und Reset-Tokens niemals \'fcber Benutzer-APIs ausgeben.\
+- Autorisierung bei jedem relevanten Backend-Endpunkt pr\'fcfen.\
+- Ein Mitglied darf auch durch manipulierte Requests keine fremden Zeiten bearbeiten.\
+- Sichere serverseitige Sitzungen mit HttpOnly-, Secure- und angemessenen SameSite-Cookies.\
+- Keine Authentifizierungstokens im Local Storage.\
+- Schutz gegen CSRF, XSS und SQL-Injection.\
+- Beschreibungstexte als Text behandeln und sicher darstellen.\
+- Parametrisierte Datenbankzugriffe.\
+- Serverseitige Eingabevalidierung und sinnvolle L\'e4ngenbegrenzungen.\
+- Rate-Limits f\'fcr Login, Einladungseinl\'f6sung und Passwort-Reset.\
+- Neutrale Antworten beim Passwort-Reset, die keine existierenden Accounts verraten.\
+- Keine Geheimnisse im Repository.\
+- Keine Stacktraces oder internen Datenbankdetails in Produktionsantworten.\
+- Keine unn\'f6tig offen zug\'e4nglichen Verwaltungs- oder Entwicklungsendpunkte.\
+- Datenbankzugang mit m\'f6glichst geringen Rechten.\
+- Gleichzeitige Bearbeitungen d\'fcrfen \'c4nderungen nicht unbemerkt \'fcberschreiben.\
+\
+Protokolliere \'c4nderungen an Zeiten, Freigaben, Rollen und Deaktivierungen mit Akteur und Zeitpunkt. Die Historie darf keine Passw\'f6rter oder geheimen Tokens enthalten.\
+\
+DESIGN\
+\
+Die gesamte Oberfl\'e4che soll deutschsprachig sein.\
+\
+Erstelle ein modernes, ruhiges und \'fcbersichtliches Design mit:\
+- Dashboard\
+- deutlich sichtbarem Timer\
+- eigenen Zeiteintr\'e4gen\
+- gemeinsamer Zeit\'fcbersicht\
+- Pr\'fcfungsansicht f\'fcr Admins und Owner\
+- Verwaltungsansichten f\'fcr Mitglieder, Teams und Aufgabenbereiche\
+\
+Die Anwendung muss auf Desktop und Smartphone gut benutzbar sein. Verwende zug\'e4ngliche Formulare, eindeutige Fehlermeldungen, sichtbare Ladezust\'e4nde und verst\'e4ndliche leere Zust\'e4nde.\
+\
+DATENBANK UND BETRIEB\
+\
+Verwende Oracle als persistente Datenbank und versionierte Datenbankmigrationen.\
+\
+Die Anwendung soll auf einer Schul-VM oder einem LXC betrieben werden k\'f6nnen. Betriebssystem, Datenbankstandort, Domain und SMTP-Zugang stehen noch nicht fest.\
+\
+Deshalb:\
+- Keine festen Serveradressen oder Zugangsdaten im Code.\
+- Konfigurierbare Datenbankverbindung.\
+- Frontend und Backend m\'f6glichst unter derselben Origin ausliefern.\
+- Keine zwingende Abh\'e4ngigkeit von Docker, Kubernetes oder Cloud-Diensten.\
+- Dokumentiere einen Betrieb als Java-Anwendung auf einer Linux-VM.\
+- Falls du eine lokale Oracle-Entwicklungsumgebung beschreibst, pr\'fcfe die tats\'e4chlichen Systemvoraussetzungen und kennzeichne zus\'e4tzliche Software klar.\
+- Verwende in Tests keine andere Datenbank als angeblichen Nachweis f\'fcr Oracle-Kompatibilit\'e4t.\
+\
+Dokumentiere:\
+- Voraussetzungen und Installation\
+- lokale Entwicklung\
+- Einrichtung der Oracle-Datenbank und des Anwendungsbenutzers\
+- Datenbankmigrationen\
+- Konfigurationsvariablen mit einer Beispieldatei ohne Geheimnisse\
+- SMTP-Einrichtung\
+- Erstellung des ersten Owners\
+- Build und Start\
+- dauerhaften Betrieb als Dienst\
+- Reverse Proxy und HTTPS\
+- ben\'f6tigte Netzwerkfreigaben\
+- Backup von Datenbank und notwendiger Konfiguration\
+- Wiederherstellung aus einem Backup\
+- Updates\
+- typische Fehler und deren Behebung\
+\
+Ein Neustart der Anwendung darf keine Daten verlieren.\
+\
+TESTS UND ABNAHME\
+\
+Schreibe aussagekr\'e4ftige automatisierte Tests f\'fcr die wesentlichen Abl\'e4ufe und Sicherheitsgrenzen, insbesondere:\
+- Einladung, Ablauf, Widerruf und einmalige Einl\'f6sung\
+- Login und Berechtigungen\
+- Zugriff auf fremde Eintr\'e4ge\
+- Timer und Schutz vor parallelen Timern\
+- \'fcberlappende und ung\'fcltige Zeiten\
+- Freigabe und Ablehnung\
+- Verbot der Selbstgenehmigung\
+- R\'fccksetzung auf PENDING nach \'c4nderungen\
+- korrekte Summen mit kombinierten Filtern\
+- Stammteamwechsel ohne Ver\'e4nderung historischer Daten\
+\
+Pr\'fcfe au\'dferdem die wichtigsten Abl\'e4ufe im Browser, sofern dir Browserwerkzeuge zur Verf\'fcgung stehen.\
+\
+Lege Beispieldaten ausschlie\'dflich f\'fcr einen ausdr\'fccklich aktivierten Entwicklungsmodus an.\
+\
+Falls du wegen fehlender Oracle-Instanz, SMTP-Zugangsdaten oder anderer Infrastruktur etwas nicht tats\'e4chlich ausf\'fchren kannst, benenne genau:\
+- was implementiert ist\
+- was gepr\'fcft wurde\
+- was noch nicht gepr\'fcft werden konnte\
+- welche konkreten Schritte zur Pr\'fcfung fehlen\
+\
+Behaupte keine erfolgreichen Tests oder Produktionsbereitschaft, die du nicht nachweisen kannst.\
+\
+LIEFERUMFANG\
+\
+Liefere den vollst\'e4ndigen Quellcode, Datenbankmigrationen, erforderliche Konfigurationsbeispiele, Tests und eine verst\'e4ndliche deutsche README.\
+\
+Beginne mit einem kurzen Umsetzungsplan und setze ihn anschlie\'dfend direkt um. Bleibe nicht beim Plan stehen.\
+\
+Fasse am Ende knapp zusammen:\
+- was fertig ist\
+- wie ich die Anwendung lokal starte\
+- welche Pr\'fcfungen erfolgreich waren\
+- welche Informationen oder Einrichtungsschritte f\'fcr den Schulserver noch fehlen}

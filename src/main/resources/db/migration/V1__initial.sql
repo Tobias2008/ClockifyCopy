@@ -1,0 +1,16 @@
+CREATE TABLE app_lock (id NUMBER(1) PRIMARY KEY, bootstrapped NUMBER(1) DEFAULT 0 NOT NULL CHECK (bootstrapped IN (0,1)));
+INSERT INTO app_lock(id) VALUES(1);
+CREATE TABLE teams (id VARCHAR2(36) PRIMARY KEY, name VARCHAR2(100 CHAR) NOT NULL, active NUMBER(1) DEFAULT 1 NOT NULL CHECK(active IN (0,1)), version NUMBER(10) DEFAULT 0 NOT NULL);
+CREATE TABLE activities (id VARCHAR2(36) PRIMARY KEY, name VARCHAR2(100 CHAR) NOT NULL, color VARCHAR2(7) NOT NULL, active NUMBER(1) DEFAULT 1 NOT NULL CHECK(active IN (0,1)), version NUMBER(10) DEFAULT 0 NOT NULL);
+CREATE TABLE members (id VARCHAR2(36) PRIMARY KEY, email VARCHAR2(254 CHAR) NOT NULL UNIQUE, display_name VARCHAR2(80 CHAR) NOT NULL, password_hash VARCHAR2(100) NOT NULL, role VARCHAR2(10) NOT NULL CHECK(role IN ('OWNER','ADMIN','MEMBER')), team_id VARCHAR2(36) NOT NULL REFERENCES teams(id), active NUMBER(1) DEFAULT 1 NOT NULL CHECK(active IN (0,1)), version NUMBER(10) DEFAULT 0 NOT NULL);
+CREATE TABLE sessions (token_hash VARCHAR2(64) PRIMARY KEY, user_id VARCHAR2(36) NOT NULL REFERENCES members(id), csrf VARCHAR2(64) NOT NULL, expires_at NUMBER(19) NOT NULL);
+CREATE INDEX sessions_user ON sessions(user_id);
+CREATE TABLE account_tokens (id VARCHAR2(36) PRIMARY KEY, email VARCHAR2(254 CHAR) NOT NULL, kind VARCHAR2(10) NOT NULL CHECK(kind IN ('INVITE','RESET')), team_id VARCHAR2(36) REFERENCES teams(id), token_hash VARCHAR2(64) NOT NULL UNIQUE, expires_at NUMBER(19) NOT NULL, used_at NUMBER(19), revoked_at NUMBER(19), created_by VARCHAR2(36) REFERENCES members(id), created_at NUMBER(19) NOT NULL);
+CREATE INDEX tokens_email ON account_tokens(email,kind);
+CREATE TABLE time_entries (id VARCHAR2(36) PRIMARY KEY, user_id VARCHAR2(36) NOT NULL REFERENCES members(id), team_id VARCHAR2(36) NOT NULL REFERENCES teams(id), activity_id VARCHAR2(36) NOT NULL REFERENCES activities(id), description VARCHAR2(1000 CHAR) NOT NULL, started_at NUMBER(19) NOT NULL, ended_at NUMBER(19), status VARCHAR2(10) NOT NULL CHECK(status IN ('RUNNING','PENDING','APPROVED','DENIED')), decided_by VARCHAR2(36) REFERENCES members(id), decided_at NUMBER(19), reason VARCHAR2(1000 CHAR), request_key VARCHAR2(36) NOT NULL, version NUMBER(10) DEFAULT 0 NOT NULL, CONSTRAINT entry_request UNIQUE(user_id,request_key), CONSTRAINT entry_times CHECK ((status='RUNNING' AND ended_at IS NULL) OR (status<>'RUNNING' AND ended_at>started_at)), CONSTRAINT no_self_review CHECK (decided_by IS NULL OR decided_by<>user_id));
+CREATE UNIQUE INDEX one_running_timer ON time_entries(CASE WHEN status='RUNNING' THEN user_id END);
+CREATE INDEX entries_user_time ON time_entries(user_id,started_at,ended_at);
+CREATE INDEX entries_filters ON time_entries(status,team_id,activity_id);
+CREATE TABLE audit_events (id VARCHAR2(36) PRIMARY KEY, actor_id VARCHAR2(36) REFERENCES members(id), action VARCHAR2(60) NOT NULL, entity_id VARCHAR2(36) NOT NULL, details CLOB NOT NULL, created_at NUMBER(19) NOT NULL);
+CREATE INDEX audit_entity ON audit_events(entity_id,created_at);
+CREATE TABLE rate_limits (bucket VARCHAR2(64) PRIMARY KEY, window_start NUMBER(19) NOT NULL, attempts NUMBER(10) NOT NULL);

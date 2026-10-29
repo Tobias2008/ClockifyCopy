@@ -1,0 +1,22 @@
+[Unit]
+Description=Ballzeit Zeiterfassung
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ballzeit
+Group=ballzeit
+WorkingDirectory=/opt/ballzeit/current
+EnvironmentFile=/etc/ballzeit/ballzeit.env
+ExecStart=/usr/bin/java -Xms128m -Xmx512m -jar /opt/ballzeit/current/quarkus-app/quarkus-run.jar
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

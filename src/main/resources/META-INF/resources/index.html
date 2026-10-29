@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#f8f6fc" />
+    <title>Time Tracker · Gemeinsam zählt jede Stunde</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div id="notices" role="status" aria-live="polite"></div>
+    <div id="app">
+      <main class="auth"><p>Time Tracker wird geladen …</p></main>
+    </div>
+    <dialog id="modal">
+      <div id="modal-body"></div>
+      <button id="close-modal" class="secondary" type="button">
+        Schließen
+      </button>
+    </dialog>
+    <noscript
+      >Bitte JavaScript aktivieren, um Time Tracker zu verwenden.</noscript
+    >
+  </body>
+</html>
