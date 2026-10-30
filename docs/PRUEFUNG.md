@@ -142,3 +142,21 @@ Die serverseitige Projektkonfiguration und persönliche Darstellung gehören zum
 - Farbauswahl und Hell-/Dunkelmodus werden jetzt automatisch gespeichert. Ein JavaScript-Laufzeittest mit simulierten UI-/API-Schnittstellen hat schnelle aufeinanderfolgende Änderungen, geordnete Versionsnummern und die Speicherbestätigung geprüft. Der Oracle-Test prüft weiterhin alle acht Kombinationen und deren Persistenz.
 - Die Tätigkeitsauswahl übernimmt angeklickte Vorschläge; der Safari-Mausklick wurde überprüft.
 - Auf ausdrücklichen Wunsch wurden alle Anwendungsdaten im lokalen Schema BALLZEIT_LOCAL gelöscht und die Ersteinrichtung zurückgesetzt. Schema und Migrationen bleiben bestehen.
+
+
+## Oberflächenkorrekturen vom 30. Oktober 2026
+
+- Feedback ist unabhängig von der Palette grün (Erfolg) beziehungsweise rot (Fehler). Dialogfehler erscheinen innerhalb der obersten Dialogebene und bleiben bis zum Schließen sichtbar.
+- Nachträge verwenden getrennte Datums- und Minutenfelder mit dem heutigen Wiener Datum als Vorgabe. Unveränderte Zeiten behalten bei Korrekturen ihre gespeicherten Sekunden.
+- Zeitübersicht zeigt Statistiken, Prüfung konzentriert sich auf Freigaben mit eingeklappten Filtern. Direktauswahl von Stammteam und Rolle verwendet die bestehenden Berechtigungs- und Versionsprüfungen.
+- JavaScript-Laufzeitprüfung mit simulierten DOM-/API-Schnittstellen: Datumsvorgabe, Minutenfelder, API-Serialisierung sowie Diagrammauswahl per Pointer und Pfeiltasten erfolgreich.
+- Vollständiger Build mit 48 Tests (12 Unit + 36 Oracle) erfolgreich. JavaScript-Syntax und Diff-Whitespace geprüft. Eine erneute visuelle Browserprüfung war wegen Fehlern der Computersteuerung nicht möglich; insbesondere die mobile Darstellung und echte Touchgesten bleiben manuell zu prüfen.
+
+
+## Weitere Oberflächenprüfung vom 30. Oktober 2026
+
+- Safari mit separatem Testkonto und BALLZEIT_DEV: alle vier Paletten in Hell und Dunkel durchgeschaltet, Speicherbestätigung und Darstellung geprüft. Zentrierte Mitglieder-Auswahl im lila Dunkelmodus geöffnet; Hover verwendet den helleren Palettenton. Rechnerischer Textkontrast auf dem Hover-Hintergrund in allen acht Kombinationen: mindestens 10:1.
+- Datumsfelder verwenden Text im Format TT.MM.JJJJ, ohne nativen Kalender. Filter starten mit heute als tatsächlichem Zeitraum; gelöschte Felder erlauben offene Grenzen. Browserprüfung: 31.02.2026 wird mit verständlicher Validierung abgewiesen; 01.01.2026 wird als gültiger Filter übernommen. JavaScript-Prüfung zusätzlich für Schaltjahre und ungültige Formate.
+- Historie im Detaildialog mehrfach ein-/ausgeblendet: weiterhin genau dieselben drei Testereignisse, keine Duplikate. Abstand vor der Historienliste visuell geprüft.
+- Diagramm auf Dashboard und Zeitübersicht per Pointer geprüft: kompakter Hinweis neben dem Zeiger, sichtbarer markierter Punkt und normaler Mauszeiger. Koordinaten berücksichtigen die tatsächliche SVG-Transformation. Native Touchgesten wurden nicht auf einem physischen Gerät geprüft.
+- Vollständiger Build erfolgreich: 48 Tests (12 Unit + 36 Oracle). Zusätzliche Zugriffsassertionen bestätigen: Owner/Admin können Eintragshistorien lesen, Mitglied und anderes Mitglied erhalten HTTP 403; auch die globale Historie ist für Mitglieder gesperrt.

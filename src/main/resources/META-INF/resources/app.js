@@ -9,7 +9,7 @@ let me = null,
   serverOffset = 0,
   currentRows = [],
   overview = null,
-  filterValues = { status: "APPROVED" },
+  filterValues = defaultFilters("APPROVED"),
   tickHandle,
   project = {
     project_name: "Mein Projekt",
@@ -55,8 +55,20 @@ const notify = (message, error = false) => {
     },
     message,
   );
-  document.querySelector("#notices").append(n);
-  setTimeout(() => n.remove(), 9000);
+  const close = btn("×", () => n.remove(), "notice-close");
+  close.setAttribute("aria-label", "Meldung schließen");
+  n.prepend(el("strong", {}, error ? "Fehler · " : "Erfolgreich · "));
+  n.append(close);
+  if (modal.open) {
+    let host = modal.querySelector(".modal-notices");
+    if (!host) {
+      host = el("div", { class: "modal-notices", "aria-live": "polite" });
+      modal.prepend(host);
+    }
+    host.append(n);
+    modal.scrollTop = 0;
+  } else document.querySelector("#notices").append(n);
+  if (!error) setTimeout(() => n.remove(), 9000);
 };
 async function api(path, options = {}) {
   const headers = { ...options.headers };
@@ -223,6 +235,7 @@ const select = (name, options, value = "", extra = {}) => {
       );
   };
   const close = (focus = false) => {
+    if (panel.matches(":popover-open")) panel.hidePopover();
     panel.hidden = true;
     trigger.setAttribute("aria-expanded", "false");
     if (focus) trigger.focus();
@@ -239,6 +252,18 @@ const select = (name, options, value = "", extra = {}) => {
       search.value = "";
       paint();
       const rect = trigger.getBoundingClientRect();
+      if (wrap.classList.contains("member-inline") && panel.showPopover) {
+        panel.setAttribute("popover", "manual");
+        panel.style.position = "fixed";
+        panel.style.margin = "0";
+        panel.style.minWidth = rect.width + "px";
+        panel.style.left =
+          Math.max(12, Math.min(rect.left, window.innerWidth - 280)) + "px";
+        panel.style.top =
+          Math.min(rect.bottom + 5, window.innerHeight - 240) + "px";
+        panel.showPopover();
+        return;
+      }
       panel.classList.toggle(
         "above",
         window.innerHeight - rect.bottom < Math.min(260, panel.scrollHeight) &&
@@ -443,6 +468,7 @@ const offset = (ms) => {
   return v.replace("GMT", "");
 };
 function showDialog(content) {
+  modal.querySelector(".modal-notices")?.remove();
   modalBody.replaceChildren(content);
   if (!modal.open) modal.showModal();
 }
@@ -514,14 +540,9 @@ function auth(mode = "login", token = "") {
           pattern: "[a-zA-Z0-9][a-zA-Z0-9._-]{1,31}",
           autocomplete: "off",
           spellcheck: false,
-          placeholder: "z. B. t.payreder",
+          placeholder: "it/ifxxxxxx",
         }),
         "Dein persönliches Schulkürzel, nicht dein Passwort.",
-      ),
-      el(
-        "p",
-        { class: "info-box" },
-        "Du startest ohne Team. Teams werden später von einem Admin oder Owner erstellt und zugewiesen.",
       ),
     );
   if (mode === "bootstrap") {
@@ -686,6 +707,55 @@ async function initialize() {
     else notify(e.message, true);
   }
 }
+function navIcon(name) {
+  const paths = {
+    dashboard: [
+      "M3 3h7v7H3z",
+      "M14 3h7v7h-7z",
+      "M3 14h7v7H3z",
+      "M14 14h7v7h-7z",
+    ],
+    mine: ["M12 8v4l3 2", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18"],
+    overview: ["M4 20V10", "M10 20V4", "M16 20v-7", "M22 20H2"],
+    review: ["M9 4H5v17h14V4h-4", "M9 3h6v4H9z", "m8 14 3 3 5-6"],
+    members: [
+      "M9 3a3 3 0 1 0 0 6 3 3 0 0 0 0-6",
+      "M2 21v-3a7 7 0 0 1 14 0v3",
+      "M17 4a3 3 0 0 1 0 6",
+      "M19 14a5 5 0 0 1 3 5v2",
+    ],
+    catalog: [
+      "M9 3h6v5H9z",
+      "M2 16h6v5H2z",
+      "M16 16h6v5h-6z",
+      "M12 8v4H5v4",
+      "M12 12h7v4",
+    ],
+    history: ["M3 4v5h5", "M3 9a9 9 0 1 1 1 9", "M12 7v5l3 2"],
+    account: [
+      "M4 6h16",
+      "M4 12h16",
+      "M4 18h16",
+      "M8 3v6",
+      "M16 9v6",
+      "M10 15v6",
+    ],
+  };
+  return svgNode(
+    "svg",
+    {
+      viewBox: "0 0 24 24",
+      class: "nav-icon",
+      "aria-hidden": "true",
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 1.7,
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round",
+    },
+    ...(paths[name] || []).map((d) => svgNode("path", { d })),
+  );
+}
 function shell() {
   root.replaceChildren();
   const nav = el("nav", { class: "nav", "aria-label": "Hauptnavigation" });
@@ -700,14 +770,14 @@ function shell() {
         ? [["review", "✓", "Prüfung"]]
         : []),
       ["members", "♧", "Mitglieder"],
-      ["catalog", "▦", "Teams & Tätigkeiten"],
+      ["catalog", "▦", "Organisation"],
       ["history", "↺", "Historie"],
     );
   links.push(["account", "⚙", "Einstellungen"]);
   for (const [id, icon, label] of links)
     nav.append(
       btn(
-        [el("span", {}, icon), label],
+        [navIcon(id), el("span", { class: "nav-text" }, label)],
         () => navigate(id),
         page === id ? "active" : "",
       ),
@@ -790,9 +860,9 @@ function shell() {
 }
 async function navigate(next) {
   if (next === "review" && page !== "review")
-    filterValues = { status: "PENDING" };
+    filterValues = defaultFilters("PENDING");
   if (next === "overview" && page !== "overview")
-    filterValues = { status: "APPROVED" };
+    filterValues = defaultFilters("APPROVED");
   page = next;
   await render();
 }
@@ -860,7 +930,7 @@ async function render() {
 function title(kicker, heading, sub, action) {
   return el(
     "div",
-    {},
+    { class: "page-title" },
     el("p", { class: "eyebrow" }, kicker),
     el("div", { class: "heading" }, el("h1", {}, heading), action),
     el("p", { class: "subtitle" }, sub),
@@ -1492,46 +1562,53 @@ function entryDialog(row = null) {
   desc.classList.add("full");
   const running = row?.status === "RUNNING";
   if (!running) {
-    form.append(
-      field(
-        "Beginn · Europe/Vienna",
-        input("start", "datetime-local", row ? local(row.started_at) : "", {
-          required: true,
-          step: 1,
-        }),
-      ),
-      field(
-        "Ende · Europe/Vienna",
-        input("end", "datetime-local", row ? local(row.ended_at) : "", {
-          required: true,
-          step: 1,
-        }),
-      ),
-      field(
-        "Beginn: UTC-Offset",
-        select(
-          "startOffset",
-          [
-            ["", "Automatisch (eindeutige Zeit)"],
-            ["+02:00", "+02:00 · Sommerzeit"],
-            ["+01:00", "+01:00 · Winterzeit"],
-          ],
-          row ? offset(row.started_at) : "",
+    const today = local(Date.now() + serverOffset).slice(0, 10);
+    for (const [name, label, value] of [
+      ["start", "Beginn", row?.started_at],
+      ["end", "Ende", row?.ended_at],
+    ]) {
+      const stamp = value ? local(value) : "";
+      form.append(
+        el(
+          "section",
+          { class: "datetime-section" },
+          el("h3", {}, label),
+          el(
+            "div",
+            { class: "datetime-pair" },
+            field(
+              "Datum",
+              dateInput(name + "Date", stamp.slice(0, 10) || today, true),
+            ),
+            field(
+              "Uhrzeit",
+              input(name + "Time", "time", stamp.slice(11, 16), {
+                required: true,
+                step: 60,
+                title: "HH:MM",
+              }),
+            ),
+          ),
+          el(
+            "details",
+            { class: "offset-details" },
+            el("summary", {}, "Sommer-/Winterzeit"),
+            field(
+              "UTC-Offset",
+              select(
+                name + "Offset",
+                [
+                  ["", "Automatisch"],
+                  ["+02:00", "+02:00 · Sommerzeit"],
+                  ["+01:00", "+01:00 · Winterzeit"],
+                ],
+                value ? offset(value) : "",
+              ),
+            ),
+          ),
         ),
-      ),
-      field(
-        "Ende: UTC-Offset",
-        select(
-          "endOffset",
-          [
-            ["", "Automatisch (eindeutige Zeit)"],
-            ["+02:00", "+02:00 · Sommerzeit"],
-            ["+01:00", "+01:00 · Winterzeit"],
-          ],
-          row ? offset(row.ended_at) : "",
-        ),
-      ),
-    );
+      );
+    }
   }
   const submit = el(
     "button",
@@ -1550,9 +1627,22 @@ function entryDialog(row = null) {
   form.onsubmit = (e) => {
     e.preventDefault();
     busy(submit, async () => {
+      const values = vals(form);
+      if (!running) {
+        for (const name of ["start", "end"]) {
+          values[name] =
+            isoDate(values[name + "Date"]) + "T" + values[name + "Time"];
+          // A description-only edit must retain the stored timer seconds.
+          const original = row?.[name === "start" ? "started_at" : "ended_at"];
+          if (original && values[name] === local(original).slice(0, 16))
+            values[name] = local(original);
+          delete values[name + "Date"];
+          delete values[name + "Time"];
+        }
+      }
       await api("/time/entries" + (row ? "/" + row.id : ""), {
         method: row ? "PUT" : "POST",
-        body: { ...vals(form), requestKey: key, version: row?.version },
+        body: { ...values, requestKey: key, version: row?.version },
       });
       modal.close();
       notify("Eintrag gespeichert.");
@@ -1606,23 +1696,38 @@ function detailDialog(row) {
         {},
         "Geprüft von " + row.reviewer_name + " am " + datetime(row.decided_at),
       ),
-      row.reason
-        ? el("p", { class: "detail" }, "Begründung: " + row.reason)
-        : null,
+      ...(row.reason
+        ? [el("p", { class: "detail" }, "Begründung: " + row.reason)]
+        : []),
     );
   if (isAdmin()) {
-    box.append(
-      btn(
-        "Änderungshistorie laden",
-        async (e) => {
+    const history = el("section", { class: "entry-history", hidden: true });
+    let loaded = false,
+      loading = false;
+    const toggle = btn(
+      "Änderungshistorie anzeigen",
+      async (e) => {
+        if (loading) return;
+        if (!loaded) {
+          loading = true;
           await busy(e.currentTarget, async () => {
             const events = await api("/time/entries/" + row.id + "/history");
-            box.append(auditList(events));
+            history.replaceChildren(auditList(events));
+            loaded = true;
           });
-        },
-        "secondary",
-      ),
+          loading = false;
+          if (!loaded) return;
+        }
+        history.hidden = !history.hidden;
+        toggle.textContent = history.hidden
+          ? "Änderungshistorie anzeigen"
+          : "Änderungshistorie ausblenden";
+        toggle.setAttribute("aria-expanded", String(!history.hidden));
+      },
+      "secondary history-toggle",
     );
+    toggle.setAttribute("aria-expanded", "false");
+    box.append(toggle, history);
   }
   showDialog(box);
 }
@@ -1666,43 +1771,84 @@ function chart(groups) {
     ),
   );
 }
-function dateFilter(name, value, label) {
-  const control = input(name, "date", value || "");
-  const overlay = el(
-    "span",
-    { class: "date-empty-label", "aria-hidden": "true" },
-    name === "from" ? "Kein Startdatum" : "Kein Enddatum",
+function europeanDate(value) {
+  if (!value) return "";
+  return value.split("-").reverse().join(".");
+}
+function isoDate(value) {
+  if (!value.trim()) return "";
+  const match = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(value.trim());
+  if (!match) throw Error("Datum bitte als TT.MM.JJJJ eingeben.");
+  const [, day, month, year] = match;
+  const check = new Date(
+    Date.UTC(Number(year), Number(month) - 1, Number(day)),
   );
+  if (
+    Number(year) < 1900 ||
+    check.getUTCFullYear() !== Number(year) ||
+    check.getUTCMonth() !== Number(month) - 1 ||
+    check.getUTCDate() !== Number(day)
+  )
+    throw Error("Dieses Datum gibt es nicht. Bitte TT.MM.JJJJ prüfen.");
+  return year + "-" + month + "-" + day;
+}
+function dateInput(name, isoValue, required = false) {
+  const control = input(name, "text", europeanDate(isoValue), {
+    required,
+    placeholder: "TT.MM.JJJJ",
+    inputMode: "text",
+    maxLength: 10,
+    autocomplete: "off",
+    class: "european-date",
+    "aria-label": "Datum im Format TT.MM.JJJJ",
+  });
+  const validate = () => {
+    try {
+      isoDate(control.value);
+      control.setCustomValidity("");
+    } catch (error) {
+      control.setCustomValidity(error.message);
+    }
+  };
+  control.addEventListener("input", validate);
+  control.addEventListener("blur", () => {
+    validate();
+    if (control.validity.valid && control.value.trim())
+      control.value = europeanDate(isoDate(control.value));
+  });
+  return control;
+}
+function defaultFilters(status) {
+  const today = new Intl.DateTimeFormat("sv-SE", {
+    timeZone: "Europe/Vienna",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(Date.now());
+  return { status, from: today, to: today };
+}
+function dateFilter(name, value, label) {
+  const control = dateInput(name, value || "");
   const clear = btn(
     "×",
     () => {
       control.value = "";
-      sync();
       control.dispatchEvent(new Event("input", { bubbles: true }));
     },
     "date-clear",
   );
   clear.setAttribute("aria-label", label + " löschen");
-  const wrap = el("div", { class: "date-control" }, control, overlay, clear);
-  const sync = () => {
-    wrap.classList.toggle("empty", !control.value);
-    overlay.hidden = Boolean(control.value);
-    clear.hidden = !control.value;
-  };
-  control.addEventListener("input", sync);
-  control.addEventListener("change", sync);
-  sync();
-  return field(label, wrap);
+  return field(label, el("div", { class: "date-control" }, control, clear));
 }
 function filterForm(review) {
   const f = filterValues,
     form = el("form", { class: "filters" });
   form.append(
     el(
-      "div",
+      "details",
       { class: "filter-intro full" },
       el(
-        "strong",
+        "summary",
         {},
         "Nur passende Einträge – alle Filter gelten gleichzeitig",
       ),
@@ -1712,8 +1858,12 @@ function filterForm(review) {
         "Zeitraum UND Personen UND Team UND Tätigkeit UND Status. Bei mehreren Personen genügt eine der ausgewählten Personen. Es werden nur passende Einträge zurückgegeben, niemals automatisch alle Zeiten einer Person.",
       ),
     ),
-    dateFilter("from", f.from, "Von · optional"),
-    dateFilter("to", f.to, "Bis einschließlich · optional"),
+    el(
+      "div",
+      { class: "filter-dates" },
+      dateFilter("from", f.from, "Von"),
+      dateFilter("to", f.to, "Bis einschließlich"),
+    ),
     field(
       "Status",
       select(
@@ -1741,7 +1891,6 @@ function filterForm(review) {
         ],
         f.team || "",
       ),
-      "Historisches Team des Eintrags, unabhängig von späteren Teamwechseln.",
     ),
     field(
       "Tätigkeit / Projekt",
@@ -1762,7 +1911,6 @@ function filterForm(review) {
         "",
         { multiple: true, selectedValues: f.people || [] },
       ),
-      "Mehrfachauswahl per Klick oder Tastatur. Ohne Auswahl: alle Personen.",
     ),
   );
   const submit = el("button", { type: "submit" }, "Filter anwenden");
@@ -1779,7 +1927,7 @@ function filterForm(review) {
       btn(
         "Zurücksetzen",
         () => {
-          filterValues = { status: review ? "PENDING" : "APPROVED" };
+          filterValues = defaultFilters(review ? "PENDING" : "APPROVED");
           render();
         },
         "secondary",
@@ -1803,6 +1951,8 @@ function filterForm(review) {
     e.preventDefault();
     filterValues = {
       ...vals(form),
+      from: isoDate(vals(form).from),
+      to: isoDate(vals(form).to),
       people: new FormData(form).getAll("person"),
     };
     render();
@@ -1933,11 +2083,12 @@ function trendChart(points) {
   if (points.length < 65)
     points.forEach((p, i) =>
       svg.append(
-        svgNode(
-          "circle",
-          { cx: x(i), cy: y(p.durationMillis), r: 4, class: "chart-point" },
-          svgNode("title", {}, p.name + ": " + hours(p.durationMillis)),
-        ),
+        svgNode("circle", {
+          cx: x(i),
+          cy: y(p.durationMillis),
+          r: 4,
+          class: "chart-point",
+        }),
       ),
     );
   svg.append(
@@ -1957,9 +2108,106 @@ function trendChart(points) {
       points.at(-1).name,
     ),
   );
-  return el(
+  const tooltip = el("output", {
+    class: "chart-tooltip",
+    "aria-live": "polite",
+    hidden: true,
+  });
+  const guide = svgNode("line", {
+    y1: 12,
+    y2: height - bottom,
+    class: "chart-cursor",
+    visibility: "hidden",
+  });
+  const marker = svgNode("circle", {
+    r: 6,
+    class: "chart-point chart-selected",
+    visibility: "hidden",
+  });
+  svg.append(guide, marker);
+  let selected = 0,
+    pointerInteraction = false;
+  const reveal = (i) => {
+    selected = Math.max(0, Math.min(points.length - 1, i));
+    const p = points[selected];
+    tooltip.textContent =
+      europeanDate(p.name) + " · " + hours(p.durationMillis);
+    tooltip.hidden = false;
+    guide.setAttribute("x1", x(selected));
+    guide.setAttribute("x2", x(selected));
+    guide.setAttribute("visibility", "visible");
+    marker.setAttribute("cx", x(selected));
+    marker.setAttribute("cy", y(p.durationMillis));
+    marker.setAttribute("visibility", "visible");
+  };
+  svg.setAttribute("tabindex", "0");
+  svg.setAttribute("role", "group");
+  svg.setAttribute(
+    "aria-label",
+    "Zeitverlauf. Mit Pfeiltasten Werte erkunden oder über das Diagramm wischen.",
+  );
+  const pointer = (e) => {
+    pointerInteraction = true;
+    const point = svg.createSVGPoint();
+    point.x = e.clientX;
+    point.y = e.clientY;
+    const px = point.matrixTransform(svg.getScreenCTM().inverse()).x;
+    reveal(
+      Math.round(((px - left) / (width - left - 15)) * (points.length - 1)),
+    );
+    const containerBounds = container.getBoundingClientRect();
+    tooltip.style.left =
+      Math.max(
+        0,
+        Math.min(
+          e.clientX - containerBounds.left + 12,
+          containerBounds.width - tooltip.offsetWidth,
+        ),
+      ) + "px";
+    tooltip.style.top =
+      Math.max(0, e.clientY - containerBounds.top - tooltip.offsetHeight - 12) +
+      "px";
+  };
+  svg.addEventListener("pointermove", pointer);
+  svg.addEventListener("pointerdown", (e) => {
+    svg.setPointerCapture(e.pointerId);
+    pointer(e);
+  });
+  const hideTooltip = () => {
+    pointerInteraction = false;
+    tooltip.hidden = true;
+    guide.setAttribute("visibility", "hidden");
+    marker.setAttribute("visibility", "hidden");
+  };
+  svg.addEventListener("pointerleave", hideTooltip);
+  svg.addEventListener("pointercancel", hideTooltip);
+  svg.addEventListener("blur", hideTooltip);
+  const keyboardReveal = () => {
+    reveal(selected);
+    tooltip.style.left = "12px";
+    tooltip.style.top = "8px";
+  };
+  svg.addEventListener("focus", () => {
+    if (!pointerInteraction) keyboardReveal();
+  });
+  svg.addEventListener("keydown", (e) => {
+    if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) {
+      e.preventDefault();
+      pointerInteraction = false;
+      reveal(
+        e.key === "Home"
+          ? 0
+          : e.key === "End"
+            ? points.length - 1
+            : selected + (e.key === "ArrowRight" ? 1 : -1),
+      );
+      keyboardReveal();
+    }
+  });
+  const container = el(
     "div",
-    {},
+    { class: "trend-container" },
+    tooltip,
     svg,
     el(
       "details",
@@ -1972,6 +2220,7 @@ function trendChart(points) {
       ),
     ),
   );
+  return container;
 }
 function donutChart(groups) {
   const nonzero = groups.filter((g) => g.durationMillis > 0),
@@ -2107,11 +2356,14 @@ async function overviewPage(area, review) {
   const data = await api("/time/overview?" + query());
   overview = { ...data, review };
   currentRows = data.entries;
+  area.className = review ? "review-page" : "overview-page";
   area.replaceChildren(
     title(
-      review ? "Gemeinsam geprüft" : "Dein Projekt in Zahlen",
+      review ? "Freigabezentrale" : "Dein Projekt in Zahlen",
       review ? "Zeiten prüfen" : "Zeitübersicht",
-      "Ein klarer Blick auf genau die Einträge, die zu allen angewendeten Filtern passen.",
+      review
+        ? "Einträge auswählen, prüfen und freigeben – alles an einem Ort."
+        : "Arbeitszeit, Trends und Beiträge deines Projekts im Überblick.",
       btn(
         "↓ CSV exportieren",
         () => {
@@ -2120,7 +2372,18 @@ async function overviewPage(area, review) {
         "secondary",
       ),
     ),
-    el("section", { class: "card filter-card" }, filterForm(review)),
+    review
+      ? el(
+          "details",
+          { class: "card filter-card review-filters" },
+          el(
+            "summary",
+            {},
+            "Prüfliste filtern · Zeitraum, Personen und Status",
+          ),
+          filterForm(review),
+        )
+      : el("section", { class: "card filter-card" }, filterForm(review)),
   );
   const active = el(
     "div",
@@ -2141,7 +2404,9 @@ async function overviewPage(area, review) {
       el(
         "span",
         { class: "pill" },
-        (filterValues.from || "Anfang") + " – " + (filterValues.to || "heute"),
+        (europeanDate(filterValues.from) || "Anfang") +
+          " – " +
+          (europeanDate(filterValues.to) || "heute"),
       ),
       el(
         "span",
@@ -2179,34 +2444,35 @@ async function overviewPage(area, review) {
         "Alle Status: Die erfasste Gesamtzeit enthält auch wartende und abgelehnte Einträge. Die gültigen Stunden stehen separat unter „Genehmigt / direkt erfasst“. Laufende Timer sind sichtbar, zählen aber noch nicht zur Dauer.",
       ),
     );
-  area.append(
-    statusSummary(data),
-    el(
-      "div",
-      { class: "grid overview-metrics" },
-      metric(
-        "Erfasste Zeit dieser Auswahl",
-        hours(data.durationMillis),
-        data.status === "ALL"
-          ? "Alle abgeschlossenen Status, einschließlich abgelehnter Zeiten"
-          : "Status: " +
-              (data.status === "APPROVED"
-                ? "Genehmigt / direkt erfasst"
-                : statuses[data.status]),
+  if (!review)
+    area.append(
+      statusSummary(data),
+      el(
+        "div",
+        { class: "grid overview-metrics" },
+        metric(
+          "Erfasste Zeit dieser Auswahl",
+          hours(data.durationMillis),
+          data.status === "ALL"
+            ? "Alle abgeschlossenen Status, einschließlich abgelehnter Zeiten"
+            : "Status: " +
+                (data.status === "APPROVED"
+                  ? "Genehmigt / direkt erfasst"
+                  : statuses[data.status]),
+        ),
+        metric(
+          "Abgeschlossene Einträge",
+          data.completedCount,
+          "Ø " + hours(data.averageMillis) + " pro Eintrag",
+        ),
+        metric(
+          "Beteiligte Personen",
+          data.activePeople,
+          "Nur Personen mit passenden Einträgen",
+        ),
       ),
-      metric(
-        "Abgeschlossene Einträge",
-        data.completedCount,
-        "Ø " + hours(data.averageMillis) + " pro Eintrag",
-      ),
-      metric(
-        "Beteiligte Personen",
-        data.activePeople,
-        "Nur Personen mit passenden Einträgen",
-      ),
-    ),
-    statisticsPanels(data),
-  );
+      statisticsPanels(data),
+    );
   const entries = el(
     "section",
     { class: "card" },
@@ -2227,6 +2493,26 @@ async function overviewPage(area, review) {
         btn("Auswahl ablehnen", () => decisionDialog("DENIED"), "danger"),
       ),
     );
+  if (review) {
+    area.append(
+      el(
+        "div",
+        { class: "review-banner" },
+        el(
+          "div",
+          {},
+          el(
+            "strong",
+            {},
+            data.entries.filter((x) => x.status === "PENDING").length +
+              " Einträge zur Prüfung",
+          ),
+          el("p", {}, "Nur markierte Einträge werden entschieden."),
+        ),
+        navIcon("review"),
+      ),
+    );
+  }
   area.append(entries);
 }
 function decisionDialog(status) {
@@ -2311,13 +2597,8 @@ async function members(area) {
           el("small", {}, m.school_code || "Schulkürzel noch ergänzen"),
           el("small", {}, m.email),
         ),
-        el(
-          "td",
-          {},
-          catalog.teams.find((x) => x.id === m.team_id)?.name ||
-            "Noch kein Team",
-        ),
-        el("td", {}, roles[m.role]),
+        el("td", {}, memberQuickSelect(m, "teamId")),
+        el("td", {}, memberQuickSelect(m, "role")),
         el("td", {}, Number(m.active) ? "Aktiv" : "Deaktiviert"),
         el(
           "td",
@@ -2426,6 +2707,56 @@ function inviteDialog() {
     });
   };
   showDialog(el("div", {}, el("h2", {}, "Ein Mitglied einladen"), form));
+}
+function memberQuickSelect(m, name) {
+  if (name === "role" && me.role !== "OWNER")
+    return el("span", {}, roles[m.role]);
+  const control = select(
+    name,
+    name === "role"
+      ? Object.entries(roles)
+      : [
+          ["", "Noch kein Team"],
+          ...catalog.teams
+            .filter((x) => Number(x.active) || x.id === m.team_id)
+            .map((x) => [x.id, x.name]),
+        ],
+    name === "role" ? m.role : m.team_id || "",
+  );
+  const native = control.querySelector("select");
+  control.classList.add("member-inline");
+  const trigger = control.querySelector(".picker-trigger");
+  trigger.setAttribute(
+    "aria-label",
+    (name === "role" ? "Rolle" : "Stammteam") +
+      " von " +
+      m.display_name +
+      " ändern",
+  );
+  native.addEventListener("change", async () => {
+    trigger.disabled = true;
+    try {
+      await api("/admin/members/" + m.id, {
+        method: "PUT",
+        body: {
+          displayName: m.display_name,
+          schoolCode: m.school_code,
+          role: name === "role" ? control.value : m.role,
+          teamId: name === "teamId" ? control.value : m.team_id || "",
+          active: Boolean(Number(m.active)),
+          version: m.version,
+        },
+      });
+      notify(name === "role" ? "Rolle gespeichert." : "Stammteam gespeichert.");
+      await render();
+    } catch (error) {
+      control.value = name === "role" ? m.role : m.team_id || "";
+      notify(error.message, true);
+    } finally {
+      trigger.disabled = false;
+    }
+  });
+  return control;
 }
 function memberDialog(m) {
   const form = el("form", { class: "form-grid" });

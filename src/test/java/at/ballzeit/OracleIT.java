@@ -369,6 +369,10 @@ class OracleIT {
         .get("/api/time/entries/" + e.get("id") + "/history")
         .then()
         .body("size()", equalTo(3));
+    as(owner).get("/api/time/entries/" + e.get("id") + "/history").then().statusCode(200);
+    as(member).get("/api/time/entries/" + e.get("id") + "/history").then().statusCode(403);
+    as(other).get("/api/time/entries/" + e.get("id") + "/history").then().statusCode(403);
+    as(member).get("/api/admin/history").then().statusCode(403);
     as(member).body(b).put("/api/time/entries/" + e.get("id")).then().statusCode(409);
   }
 
