@@ -133,3 +133,12 @@ Browserprüfung in Safari auf getrenntem Entwicklungsschema unter 127.0.0.1:8083
 - Die Kopfzeile sitzt auch auf kurzen Seiten oben; Auswahlmenüs und optionale Datumsgrenzen wurden überarbeitet. Kontrast der normalen Hilfstextfarben im Hellmodus rechnerisch auf mindestens 4,5:1 zum jeweiligen Seitenhintergrund geprüft. Kein vollständiger Accessibility-Audit.
 
 Die serverseitige Projektkonfiguration und persönliche Darstellung gehören zum Oracle-Backup. Bereits vorhandene Datensätze wurden durch die Migration nicht gelöscht. Physische Smartphones und weitere Browserengines wurden weiterhin nicht geprüft.
+
+
+## Nachprüfung vom 30. Oktober 2026
+
+- Vollständiger Build erfolgreich: **48 Tests (12 Unit + 36 Oracle), keine Fehler, keine übersprungenen Tests**.
+- Aktuelle Regel: Admins und Owner dürfen eigene Zeiten bestätigen. Rollenprüfung, Versionsschutz und Entscheidungshistorie bleiben erhalten. Frühere Aussagen zur gesperrten Selbstfreigabe oben beschreiben den damaligen Stand.
+- Farbauswahl und Hell-/Dunkelmodus werden jetzt automatisch gespeichert. Ein JavaScript-Laufzeittest mit simulierten UI-/API-Schnittstellen hat schnelle aufeinanderfolgende Änderungen, geordnete Versionsnummern und die Speicherbestätigung geprüft. Der Oracle-Test prüft weiterhin alle acht Kombinationen und deren Persistenz.
+- Die Tätigkeitsauswahl übernimmt angeklickte Vorschläge; der Safari-Mausklick wurde überprüft.
+- Auf ausdrücklichen Wunsch wurden alle Anwendungsdaten im lokalen Schema BALLZEIT_LOCAL gelöscht und die Ersteinrichtung zurückgesetzt. Schema und Migrationen bleiben bestehen.

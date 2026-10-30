@@ -1232,6 +1232,34 @@ function appearanceSettings() {
     role: "group",
     "aria-label": "Hell- oder Dunkelmodus",
   });
+  const status = el("p", {
+    class: "help",
+    role: "status",
+    "aria-live": "polite",
+  });
+  let saves = Promise.resolve();
+  const persist = () => {
+    const selectedColor = color,
+      selectedMode = mode;
+    status.textContent = "Darstellung wird gespeichert …";
+    saves = saves.then(async () => {
+      try {
+        me = await api("/auth/appearance", {
+          method: "PUT",
+          body: {
+            colorPreset: selectedColor,
+            colorMode: selectedMode,
+            version: me.version,
+          },
+        });
+        if (color === selectedColor && mode === selectedMode)
+          status.textContent = "Darstellung automatisch gespeichert.";
+      } catch (error) {
+        status.textContent = "Speichern fehlgeschlagen: " + error.message;
+        notify(status.textContent, true);
+      }
+    });
+  };
   const update = () => {
     applyAppearance(color, mode);
     choices
@@ -1257,6 +1285,7 @@ function appearanceSettings() {
       () => {
         color = id;
         update();
+        persist();
       },
       "theme-choice",
     );
@@ -1272,6 +1301,7 @@ function appearanceSettings() {
       () => {
         mode = id;
         update();
+        persist();
       },
       "mode-choice",
     );
@@ -1279,20 +1309,6 @@ function appearanceSettings() {
     modes.append(b);
   });
   update();
-  const save = btn(
-    "Darstellung speichern",
-    async (e) =>
-      busy(e.currentTarget, async () => {
-        me = await api("/auth/appearance", {
-          method: "PUT",
-          body: { colorPreset: color, colorMode: mode, version: me.version },
-        });
-        notify(
-          "Deine Darstellung ist gespeichert – auch für den nächsten Login.",
-        );
-      }),
-    "",
-  );
   return el(
     "section",
     { class: "card appearance-card" },
@@ -1301,11 +1317,11 @@ function appearanceSettings() {
     el(
       "p",
       { class: "help" },
-      "Jede Farbwelt gibt es in Hell und Dunkel. Die Vorschau ist sofort sichtbar; speichere deine Wahl für dein Konto.",
+      "Jede Farbwelt gibt es in Hell und Dunkel. Deine Auswahl wird sofort angewendet und automatisch für dein Konto gespeichert.",
     ),
     choices,
     modes,
-    el("div", { class: "actions" }, save),
+    status,
   );
 }
 function projectSettings() {
